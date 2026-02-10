@@ -2,11 +2,12 @@
 
 # Ensure tmux is configured to source the shared config
 TMUX_CONF="$HOME/.tmux.conf"
-SOURCE_LINE="source-file /persistence/setup/.tmux_conf"
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+SOURCE_LINE="source-file $SCRIPT_DIR/.tmux.conf"
 
 if [ -f "$TMUX_CONF" ]; then
     if grep -Fxq "$SOURCE_LINE" "$TMUX_CONF"; then
-        echo "tmux is already configured to source /persistence/setup/.tmux_conf"
+        echo "tmux is already configured to source $SCRIPT_DIR/.tmux.conf"
     else
         echo "$SOURCE_LINE" >> "$TMUX_CONF"
         echo "Added source-file line to $TMUX_CONF"
@@ -21,6 +22,9 @@ if [ -n "$TMUX" ]; then
     tmux source-file "$TMUX_CONF"
     echo "Reloaded tmux configuration"
 fi
+
+# Update package list
+sudo apt update
 
 # install less
 sudo apt install less -y 
