@@ -9,7 +9,8 @@ if [ -f "$TMUX_CONF" ]; then
     if grep -Fxq "$SOURCE_LINE" "$TMUX_CONF"; then
         echo "tmux is already configured to source $SCRIPT_DIR/.tmux.conf"
     else
-        echo "$SOURCE_LINE" >> "$TMUX_CONF"
+        # Use -e to interpret \n as a real newline
+        echo -e "\n$SOURCE_LINE" >> "$TMUX_CONF"
         echo "Added source-file line to $TMUX_CONF"
     fi
 else
@@ -41,6 +42,12 @@ export NVM_DIR="$HOME/.nvm"
 
 nvm install --lts
 nvm use --lts
+
+# Configure global npm packages to be stored in /persistence
+mkdir -p /persistence/.npm-global
+npm config set prefix '/persistence/.npm-global'
+export PATH="/persistence/.npm-global/bin:$PATH"
+
 npm install -g @google/gemini-cli
 
 # install zsh and Oh My Zsh
@@ -83,7 +90,10 @@ sudo chsh -s $(which zsh) $USER
 
 # Configure .bashrc to switch to zsh for interactive sessions
 BASH_RC="$HOME/.bashrc"
-ZSH_SWITCH="# Switch to zsh for interactive sessions
+ZSH_SWITCH="# Add global npm binaries to PATH
+export PATH=\"/persistence/.npm-global/bin:\$PATH\"
+
+# Switch to zsh for interactive sessions
 if [[ \$- == *i* ]]; then
     export SHELL=\$(which zsh)
     exec \$(which zsh) -l
@@ -104,7 +114,10 @@ fi
 
 # Configure .zshrc
 ZSH_RC="$HOME/.zshrc"
-ZSH_CONFIG="# Path to your Oh My Zsh installation.
+ZSH_CONFIG="# Add global npm binaries to PATH
+export PATH=\"/persistence/.npm-global/bin:\$PATH\"
+
+# Path to your Oh My Zsh installation.
 export ZSH=\"\$HOME/.oh-my-zsh\"
 
 ZSH_THEME=\"robbyrussell\"
@@ -117,6 +130,12 @@ plugins=(
 )
 
 source \$ZSH/oh-my-zsh.sh
+
+# History configuration
+export HISTFILE=\"/persistence/.zsh_history\"
+export HISTSIZE=10000
+export SAVEHIST=10000
+setopt SHARE_HISTORY
 
 # Automatically list directory contents on cd
 chpwd() {
