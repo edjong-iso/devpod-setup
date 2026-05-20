@@ -4,10 +4,14 @@
 TMUX_CONF="$HOME/.tmux.conf"
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 SOURCE_LINE="source-file $SCRIPT_DIR/.tmux.conf"
+REGEX="^source-file[[:space:]].*\.tmux\.conf$"
 
 if [ -f "$TMUX_CONF" ]; then
     if grep -Fxq "$SOURCE_LINE" "$TMUX_CONF"; then
         echo "tmux is already configured to source $SCRIPT_DIR/.tmux.conf"
+    elif grep -E -q "$REGEX" "$TMUX_CONF"; then
+        sed -i -E "s|^source-file[[:space:]].*\.tmux\.conf$|$SOURCE_LINE|" "$TMUX_CONF"
+        echo "Updated source-file line in $TMUX_CONF to point to $SCRIPT_DIR/.tmux.conf"
     else
         # Use -e to interpret \n as a real newline
         echo -e "\n$SOURCE_LINE" >> "$TMUX_CONF"
