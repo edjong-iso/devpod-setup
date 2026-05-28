@@ -28,6 +28,33 @@ if [ -n "$TMUX" ]; then
     echo "Reloaded tmux configuration"
 fi
 
+# Symlink AGENTS.md into each agent's expected user-level path.
+# AGENTS.md is the shared source of truth; each agent looks for its own filename.
+AGENTS_MD_TARGET="$SCRIPT_DIR/AGENTS.md"
+link_agents_md() {
+    link_path="$1"
+    link_dir=$(dirname "$link_path")
+    mkdir -p "$link_dir"
+    if [ -L "$link_path" ]; then
+        if [ "$(readlink "$link_path")" = "$AGENTS_MD_TARGET" ]; then
+            echo "$link_path already symlinked to $AGENTS_MD_TARGET"
+        else
+            ln -sfn "$AGENTS_MD_TARGET" "$link_path"
+            echo "Updated $link_path symlink to point to $AGENTS_MD_TARGET"
+        fi
+    elif [ -e "$link_path" ]; then
+        echo "WARNING: $link_path exists and is not a symlink. Skipping to avoid clobbering."
+    else
+        ln -s "$AGENTS_MD_TARGET" "$link_path"
+        echo "Symlinked $link_path -> $AGENTS_MD_TARGET"
+    fi
+}
+
+link_agents_md "$HOME/.claude/CLAUDE.md"
+# Add more here as other agents get installed, e.g.:
+# link_agents_md "$HOME/.gemini/GEMINI.md"
+# link_agents_md "$HOME/.codex/AGENTS.md"
+
 # Update package list
 sudo apt update
 
