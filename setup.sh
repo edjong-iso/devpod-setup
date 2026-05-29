@@ -55,6 +55,33 @@ link_agents_md "$HOME/.claude/CLAUDE.md"
 # link_agents_md "$HOME/.gemini/GEMINI.md"
 # link_agents_md "$HOME/.codex/AGENTS.md"
 
+# Personal Claude skills: copy each into the persistent ~/.agents/skills, then
+# symlink into the user-level discovery root ~/.claude/skills. We copy (rather
+# than symlink to $SCRIPT_DIR) because $SCRIPT_DIR lives under /tmp on devpods
+# and would dangle after a pod restart; ~/.agents is persistence-backed.
+SKILLS_SRC_DIR="$SCRIPT_DIR/skills"
+AGENTS_SKILLS_DIR="$HOME/.agents/skills"
+CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
+if [ -d "$SKILLS_SRC_DIR" ]; then
+    mkdir -p "$AGENTS_SKILLS_DIR" "$CLAUDE_SKILLS_DIR"
+    for skill_dir in "$SKILLS_SRC_DIR"/*/; do
+        [ -d "$skill_dir" ] || continue
+        skill_name=$(basename "$skill_dir")
+        cp -a "$skill_dir" "$AGENTS_SKILLS_DIR/"
+        link_path="$CLAUDE_SKILLS_DIR/$skill_name"
+        target="$AGENTS_SKILLS_DIR/$skill_name"
+        if [ -L "$link_path" ]; then
+            ln -sfn "$target" "$link_path"
+            echo "Updated skill symlink $link_path -> $target"
+        elif [ -e "$link_path" ]; then
+            echo "WARNING: $link_path exists and is not a symlink. Skipping to avoid clobbering."
+        else
+            ln -s "$target" "$link_path"
+            echo "Symlinked skill $link_path -> $target"
+        fi
+    done
+fi
+
 # Update package list
 sudo apt update
 
