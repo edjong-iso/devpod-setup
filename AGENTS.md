@@ -17,4 +17,5 @@ conventions) that would otherwise cost many turns to rediscover.
 - Run Python in this repo with `uv run python ...` (never `.venv/bin/python` or bare `python`).
 - When you need env vars in front of an allowlisted command (e.g. `uv run`), use `env VAR1=v1 VAR2=v2 uv run ...` instead of `VAR1=v1 VAR2=v2 uv run ...` — the permission matcher is prefix-based, so `env ...` matches `Bash(env *)` and avoids the prompt-per-combination explosion.
 - For multi-step log/data analysis, write a small script and run it with `uv run python <file>` instead of compound shell (`VAR=…; grep …; $(...)`) — shell var-assignment and command substitution can't be statically analyzed and always prompt.
+- Keep git/read-only inspection commands plain so they match the `Bash(git *)` allowlist — no leading `VAR=…` and no `$(…)`. Need a computed ref (e.g. merge-base)? Run it as its own plain `git` command and reuse the literal, rather than inlining `$(git merge-base …)`.
 
