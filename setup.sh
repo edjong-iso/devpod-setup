@@ -30,7 +30,14 @@ fi
 
 # Symlink AGENTS.md into each agent's expected user-level path.
 # AGENTS.md is the shared source of truth; each agent looks for its own filename.
-AGENTS_MD_TARGET="$SCRIPT_DIR/AGENTS.md"
+# We first copy it from $SCRIPT_DIR (the private GCS bucket mount) into the
+# persistent ~/.agents, then point the symlinks there: ~/.agents lives on
+# /persistence (local, always present), so the links keep resolving even if the
+# bucket mount is absent/slow. Re-runs refresh the copy from the bucket source.
+AGENTS_DIR="$HOME/.agents"
+mkdir -p "$AGENTS_DIR"
+cp -a "$SCRIPT_DIR/AGENTS.md" "$AGENTS_DIR/AGENTS.md"
+AGENTS_MD_TARGET="$AGENTS_DIR/AGENTS.md"
 link_agents_md() {
     link_path="$1"
     link_dir=$(dirname "$link_path")
@@ -56,9 +63,10 @@ link_agents_md "$HOME/.claude/CLAUDE.md"
 # link_agents_md "$HOME/.codex/AGENTS.md"
 
 # Personal Claude skills: copy each into the persistent ~/.agents/skills, then
-# symlink into the user-level discovery root ~/.claude/skills. We copy (rather
-# than symlink to $SCRIPT_DIR) because $SCRIPT_DIR lives under /tmp on devpods
-# and would dangle after a pod restart; ~/.agents is persistence-backed.
+# symlink into the user-level discovery root ~/.claude/skills. cli devpod create
+# runs this script in place from $SCRIPT_DIR (the private GCS bucket mount), so
+# we copy rather than symlink to $SCRIPT_DIR: ~/.agents lives on /persistence
+# (local, always present), whereas the bucket mount may be absent/slow.
 SKILLS_SRC_DIR="$SCRIPT_DIR/skills"
 AGENTS_SKILLS_DIR="$HOME/.agents/skills"
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
