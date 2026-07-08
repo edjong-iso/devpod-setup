@@ -90,6 +90,31 @@ if [ -d "$SKILLS_SRC_DIR" ]; then
     done
 fi
 
+# Personal Claude subagents: same copy-then-symlink pattern as skills, but the
+# discovery root is ~/.claude/agents and each agent is a single .md file.
+AGENTS_SRC_DIR="$SCRIPT_DIR/agents"
+AGENTS_AGENTS_DIR="$HOME/.agents/agents"
+CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
+if [ -d "$AGENTS_SRC_DIR" ]; then
+    mkdir -p "$AGENTS_AGENTS_DIR" "$CLAUDE_AGENTS_DIR"
+    for agent_file in "$AGENTS_SRC_DIR"/*.md; do
+        [ -f "$agent_file" ] || continue
+        agent_name=$(basename "$agent_file")
+        cp -a "$agent_file" "$AGENTS_AGENTS_DIR/"
+        link_path="$CLAUDE_AGENTS_DIR/$agent_name"
+        target="$AGENTS_AGENTS_DIR/$agent_name"
+        if [ -L "$link_path" ]; then
+            ln -sfn "$target" "$link_path"
+            echo "Updated agent symlink $link_path -> $target"
+        elif [ -e "$link_path" ]; then
+            echo "WARNING: $link_path exists and is not a symlink. Skipping to avoid clobbering."
+        else
+            ln -s "$target" "$link_path"
+            echo "Symlinked agent $link_path -> $target"
+        fi
+    done
+fi
+
 # Update package list
 sudo apt update
 
